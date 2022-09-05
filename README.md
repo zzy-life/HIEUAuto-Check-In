@@ -183,7 +183,7 @@ python3 /db/yiban/yiban.py
 
 宝塔可使用计划任务
 
-![1662265765805](image/1662265765805.png)
+![1662265765805](./1662265765805.png)
 
 ### arm64架构（树莓派)
 
@@ -197,7 +197,7 @@ python3 /db/yiban/yiban.py
 
  [Debian](https://so.csdn.net/so/search?q=Debian&spm=1001.2101.3001.7020)预编译版本Chromium下载：http://ports.ubuntu.com/pool/universe/c/chromium-browser 
 
- ![Debian预编译版本Chromium](image/425bcdcbdaae49b9bdead178dae6edcc.png) 
+ ![Debian预编译版本Chromium](./425bcdcbdaae49b9bdead178dae6edcc.png) 
 
 选择下载文件
 我们需要下载什么呢？一般是：
@@ -210,7 +210,7 @@ python3 /db/yiban/yiban.py
 
 比如，下载95.0版本的chromium： 
 
- ![下载这些内容](image/8984722c132e48c29348d422bf934ca3.png) 
+ ![下载这些内容](./8984722c132e48c29348d422bf934ca3.png) 
 
 ##### 下载
 
@@ -225,7 +225,7 @@ wget 'http://ports.ubuntu.com/pool/universe/c/chromium-browser/chromium-codecs-f
 wget 'http://ports.ubuntu.com/pool/universe/c/chromium-browser/chromium-chromedriver_95.0.4638.69-0ubuntu0.18.04.1_arm64.deb'
 ```
 
-![下载到树莓派上](image/fd9cd3c1816a47fbaebcb812a8b004ec.png) 
+![下载到树莓派上](./fd9cd3c1816a47fbaebcb812a8b004ec.png) 
 
 ##### 包管理器安装
 
@@ -243,7 +243,7 @@ sudo dpkg -i chromium-browser_95.0.4638.69-0ubuntu0.18.04.1_arm64.deb
 sudo dpkg -i chromium-chromedriver_95.0.4638.69-0ubuntu0.18.04.1_arm64.deb
 ```
 
- ![dpkg安装](image/63569b1dfb054c72b9271f2dfc0d7fe7.png) 
+ ![dpkg安装](./63569b1dfb054c72b9271f2dfc0d7fe7.png) 
 
  为了保险起见，我们再运行一次`apt`包管理器的更新： 
 
@@ -252,7 +252,7 @@ sudo apt update
 sudo apt upgrade
 ```
 
- ![apt更新](image/2d33b9ff35a54ed298177a98fadff40c.png) 
+ ![apt更新](./2d33b9ff35a54ed298177a98fadff40c.png) 
 
  到此，我们的Chromium和chromedriver就安装好了。
 
@@ -410,4 +410,4 @@ python3 /db/yiban/yiban.py
 
 宝塔可使用计划任务
 
-![1662265765805](image/1662265765805.png)
+![1662265765805](./1662265765805.png)
