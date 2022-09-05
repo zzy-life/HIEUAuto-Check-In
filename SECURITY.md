@@ -328,8 +328,8 @@ necessary.  Here is a sample; alter the names:
   Yoyodyne, Inc., hereby disclaims all copyright interest in the program
   `Gnomovision' (which makes passes at compilers) written by James Hacker.
 
-  <signature of Ty Coon>, 1 April 1989
-  Ty Coon, President of Vice
+  <signature of Ty Coon>, 1 April 2022
+  zzy
 
 This General Public License does not permit incorporating your program into
 proprietary programs.  If your program is a subroutine library, you may
