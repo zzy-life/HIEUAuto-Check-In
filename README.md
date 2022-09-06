@@ -1,5 +1,151 @@
 # 涉外易班自动打卡
 
+> 看不到本文档图片请用电脑打开，或[点击](http://www.zhangzhiyu.live:8900/vuepress/guide/python/%E6%B6%89%E5%A4%96%E6%98%93%E7%8F%AD%E8%87%AA%E5%8A%A8%E6%89%93%E5%8D%A1.html)
+
+## win10系统
+
+### 依赖
+
+1. 谷歌浏览器
+
+   如果没有可[点击](https://pan.baidu.com/s/1kDepNH15qa64MLwYhNVT3g?pwd=fmg4)
+
+   下载 ChromeStandaloneSetup64 
+
+2. python3环境
+
+   如果没有可[点击](https://pan.baidu.com/s/1kDepNH15qa64MLwYhNVT3g?pwd=fmg4)
+
+   下载 python-3.10.5-amd64 (1)
+
+3. stealth.min.js 
+
+   可点击[下载](https://pan.baidu.com/s/11JoDOsnTrv_0-LB-8ARH2w?pwd=3php)
+
+4. python3环境安装后，需要pip下载selenium，chromedriver_autoinstaller
+
+   ```shell
+   pip install chromedriver_autoinstaller
+   ```
+
+   ```shell
+   pip install selenium
+   ```
+
+
+
+### python脚本
+
+> 需要将stealth.min.js 和python脚本放在同一目录
+>
+> 脚本运行后，第一次比较慢，会下载驱动在当前目录，并生成一个文件夹，不要删除
+
+自行修改代码中学号和身份证后六位
+
+```python
+'''
+
+@ 文件功能描述：涉外自动化打卡
+
+@ 创建人：时不待我
+
+@ 博客：http://www.zhangzhiyu.live:8900/
+
+'''
+
+from time import sleep
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions
+import chromedriver_autoinstaller
+# 目标地址
+url = "http://xg.hieu.edu.cn/index"
+
+mobile_emulation = {
+
+    "deviceMetrics": {"width": 360, "height": 640, "pixelRatio": 3.0},
+
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)  "
+                 "Mobile/15E148 yiban_iOS/5.0"}
+
+
+chrome_options = Options()
+
+chrome_options.add_experimental_option("mobileEmulation", mobile_emulation)  # 这里看清楚了，不是add_argument
+
+with open('stealth.min.js') as f:
+    js = f.read()
+
+# 下载对应驱动
+chromedriver_autoinstaller.install(True)
+# 操作的目标浏览器
+driver = webdriver.Chrome(
+    chrome_options=chrome_options)  # 这里的chrome_options 建议都使用 desired_capabilities ，应为在Grid分布式中比较方便
+
+driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+    "source": js
+})
+
+# 浏览器打开目标地址
+driver.get(url)
+sleep(1)
+
+# 定位输入框
+driver.find_element(By.ID, "uname").click()
+# 清除输入框中的内容
+driver.find_element(By.ID, "uname").clear()
+# 输入框账号
+driver.find_element(By.ID, "uname").send_keys(u"学号")
+# 定位输入框
+driver.find_element(By.ID, "pd_mm").click()
+# 清除输入框中的内容
+driver.find_element(By.ID, "pd_mm").clear()
+# 输入框密码
+driver.find_element(By.ID, "pd_mm").send_keys(u"身份证后六位")
+# 点击登陆
+driver.find_element(By.NAME, "submit").click()
+# 等待网页加载
+# 创建显示等待对象
+# 设置等待条件（等搜索结果的div出现）
+WebDriverWait(driver, 3).until(
+    expected_conditions.presence_of_element_located(
+        (By.XPATH, '/html/body/div/div[2]/ul[2]/li[1]')
+    )
+)
+# 点击今日打卡
+driver.find_element(By.XPATH, "/html/body/div/div[2]/ul[2]/li[1]").click()
+# 等待网页加载
+sleep(1)
+
+if driver.find_element(By.XPATH, "/html/body/div/div/div[2]/div[1]/button/span[2]").text == "打卡":
+    # 点击打卡
+    driver.find_element(By.ID, "data_list_id_add_btn").click()
+    # 等待网页加载
+    sleep(4)
+    # 点击位置确定
+    driver.find_element(By.XPATH, "/html/body/div[12]/div[2]/div/div/div/div[4]/button").click()
+    # 点击保存
+    driver.find_element(By.XPATH, "/html/body/div[1]/div/div/div/div/form/button[2]").click()
+    sleep(1)
+    # 点击确定
+    driver.find_element(By.XPATH, "/html/body/div[12]/div[2]/div/div/div/div[4]/button").click()
+    # 等待网页加载
+    sleep(1)
+    if driver.find_element(By.XPATH, "/html/body/div/div/div[2]/div[1]/button/span[2]").text == "已打卡":
+        print("打卡成功")
+        else:
+            print("已过打卡")
+
+            driver.quit()
+```
+
+### 定时任务
+
+win系统由于不是24小时运行，所以定时任务有很多局限性，如有需要可[点击](https://blog.csdn.net/junzixing1985/article/details/125613022)自行设置
+
+
 ## 服务器部署
 
 > 使用阿里云服务器IP地址要在长沙，否则会出现异地定位
