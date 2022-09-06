@@ -135,10 +135,13 @@ if driver.find_element(By.XPATH, "/html/body/div/div/div[2]/div[1]/button/span[2
     sleep(1)
     if driver.find_element(By.XPATH, "/html/body/div/div/div[2]/div[1]/button/span[2]").text == "已打卡":
         print("打卡成功")
-        else:
-            print("已过打卡")
-
-            driver.quit()
+    else:
+        print("打卡失败")
+else:
+    print("已过打卡")
+    
+sleep(2)
+driver.quit()
 ```
 
 ### 定时任务
