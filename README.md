@@ -2,9 +2,229 @@
 
 > 看不到本文档图片请用电脑打开，或[点击](http://www.zhangzhiyu.live:8900/vuepress/guide/python/%E6%B6%89%E5%A4%96%E6%98%93%E7%8F%AD%E8%87%AA%E5%8A%A8%E6%89%93%E5%8D%A1.html)
 
-## win10系统
 
-### 依赖
+## 使用requests
+
+> 此方法使用代码直接发送请求打卡，仅供学习，如有侵权可联系删除
+
+###  :fire: 重要提示
+
+1. 修改邮箱服务器相关字段属性 mail_user，mail_pass，sender，receivers
+2. 修改lxdh  填写自己的手机号
+3. 修改Student 的学号和身份证后六位
+4. 如果使用阿里云 腾讯云等服务器 邮箱端口应该用465  常规来说25端口是被封的（不会改就自己把邮箱提醒删掉）
+5. **后端一般会记录请求的IP地址**，如果使用阿里云等固定IP服务器给多人打卡，请小心被**黑名单**
+6. 开源不易，觉得好用github点赞 :star: 
+7. 如有疑问关注微信公众号：**时不待我**  提问，不接受陌生人微信和QQ好友请求
+
+### python脚本
+
+```python
+'''
+
+@ 文件功能描述：涉外自动化打卡
+
+@ 注意事项：
+1，修改邮箱服务器相关字段属性 mail_user，mail_pass，sender，receivers
+2. 修改lxdh  填写自己的手机号
+3. 修改Student 的学号和身份证后六位
+4. 如果使用阿里云 腾讯云等服务器 邮箱端口应该用465  常规来说25端口是被封的（不会改就自己把邮箱提醒删掉）
+5. 后端一般会记录请求的IP地址，如果使用阿里云等固定IP服务器给多人打卡，请小心被黑名单
+5. 开源不易，github点赞
+6. 如有疑问关注微信公众号：时不待我  提问
+不接受陌生人微信和QQ好友请求
+
+@ 创建人：时不待我
+
+@ 博客：http://www.zhangzhiyu.live:8900/
+
+'''
+import datetime
+import hashlib
+from time import sleep
+import requests
+import smtplib
+from email.mime.text import MIMEText
+
+session = requests.Session()
+
+# 设置服务器所需信息
+# 163邮箱服务器地址
+mail_host = 'smtp.163.com'
+# 163用户名
+mail_user = 'My*****@163.com'
+# 邮箱授权码
+mail_pass = '******'
+# 邮件发送方邮箱地址
+sender = 'My*****@163.com'
+
+
+def is_today(target_date):
+    """
+    传递进时间yyyy-MM-dd判断是不是今天
+    :param target_date:
+    :return: Boolean
+    """
+    # Get the year, month and day
+    c_year = datetime.datetime.now().year
+    c_month = datetime.datetime.now().month
+    c_day = datetime.datetime.now().day
+
+    # Disassemble the date
+    date_list = target_date.split(" ")[0].split("-")
+    t_year = int(date_list[0])
+    t_month = int(date_list[1])
+    t_day = int(date_list[2])
+
+    final = False
+    if c_year == t_year and c_month == t_month and c_day == t_day:
+        final = True
+    return final
+
+
+class Student:
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+        self.session = requests.Session()
+        self.timechuo = ""
+        self.IsPost = False
+        self.baseUrl = 'http://xg.hieu.edu.cn'
+        self.headers = {}
+
+    # 封装的请求方法
+    def req(self, url, date=None, IsPost=False, headers=None):
+        self.session.trust_env = False
+        if date is None:
+            date = {}
+        if headers is None:
+            headers = self.headers
+        url = f'{self.baseUrl}{url}'
+        if IsPost:
+            res = self.session.post(url, data=date, headers=headers).json()
+        else:
+            res = self.session.get(url, params=date, headers=headers).json()
+
+        return res
+
+    # 登陆
+    def login(self):
+        # 密码加密
+        self.password = hashlib.md5(self.password.encode()).hexdigest()
+        i = len(self.password)
+        if i > 5:
+            self.password = list(self.password)
+            self.password.insert(5, 'a')
+        if i > 10:
+            self.password.insert(10, 'b')
+        self.password = "".join(self.password[:-2])
+        LoginInfo = self.req("/website/login", IsPost=True, headers={
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)  "
+                          "Mobile/15E148 yiban_iOS/5.0"},
+                             date={
+                                 "uname": self.username,
+                                 "pd_mm": self.password
+                             })
+        print("headers", self.session.cookies)
+        url = LoginInfo['goto2']
+        params = str(url).split("?")[1]
+
+        self.timechuo = params
+        print(self.timechuo)
+
+    # 获得打卡记录
+    def dakajilu(self):
+        info = self.req("/content/tabledata/student/temp/zzdk?" + self.timechuo, IsPost=False, headers={
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)  "
+                          "Mobile/15E148 yiban_iOS/5.0",
+            "Host": "xg.hieu.edu.cn",
+            "Referer": "http://xg.hieu.edu.cn/wap/menu/student/temp/zzdk?_t_s_=" + self.timechuo},
+                        date={"bSortable_0": "false",
+                              "bSortable_1": "true",
+                              "iSortingCols": "1",
+                              "iDisplayStart": "0",
+                              "iDisplayLength": "12",
+                              "iSortCol_0": "1",
+                              "sSortDir_0": "desc",
+                              })
+        return is_today(info['aaData'][0]['DKRQ'])
+
+    # 打卡请求
+    def daka(self):
+
+        info = self.req("/content/student/temp/zzdk?" + self.timechuo, IsPost=True, headers={
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)  "
+                          "Mobile/15E148 yiban_iOS/5.0",
+            "Origin": "http://xg.hieu.edu.cn",
+            "Host": "xg.hieu.edu.cn",
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Referer": "http://xg.hieu.edu.cn/wap/menu/student/temp/zzdk/_child_/edit?" + self.timechuo},
+                        date={"dkdz": "湖南省长沙市岳麓区俯前路208号", "dkdzZb": "112.939,28.2287", "dkly": "yiban", "dkd": "湖南省长沙市",
+                              "jzdValue": "430000,430100,430112", "jzdSheng.dm": "430000", "jzdShi.dm": "430100",
+                              "jzdXian.dm": "430112", "jzdDz": "湖南涉外经济学院", "jzdDz2": "湖南涉外经济学院", "lxdh": "13141412412",
+                              "sfzx": "1", "sfzx1": "在校", "twM.dm": "01", "tw1": "[35.0~37.2]正常", "yczk.dm": "01",
+                              "yczk1": "无症状", "jzInd": "0", "brStzk.dm": "01", "brStzk1": "身体健康、无异常",
+                              "brJccry.dm": "01",
+                              "brJccry1": "未接触传染源", "jrStzk.dm": "01", "jrStzk1": "身体健康、无异常", "jrJccry.dm": "01",
+                              "jrJccry1": "未接触传染源", "jkm": "1", "jkm1": "绿色", "xcm": "1", "xcm1": "绿色",
+                              "operationType": "Create", })
+        print(info['result'])
+        return info['result']
+
+
+# 按间距中的绿色按钮以运行脚本。
+if __name__ == '__main__':
+    # 登录
+    student = Student('学号', '身份证后六位')
+    student.login()
+    sleep(1)
+    # 设置收件人
+    receivers = ['79***2517@qq.com']
+
+    # 邮件内容设置
+    message = MIMEText('打卡成功', 'plain', 'utf-8')
+    # 发送方信息
+    message['From'] = sender
+    # 接受方信息
+    message['To'] = receivers[0]
+
+    if not student.dakajilu():
+        sleep(1)
+        if student.daka():
+            # 邮件主题
+            message['Subject'] = '222300810打卡成功'
+            print("打卡成功")
+    else:
+        # 邮件主题
+        message['Subject'] = '222300810今天已打卡'
+        print("今天已打卡")
+
+    # 登录并发送邮件
+    try:
+        smtpObj = smtplib.SMTP()
+        # 连接到服务器
+        smtpObj.connect(mail_host, 25)
+        # 登录到服务器
+        smtpObj.login(mail_user, mail_pass)
+        # 发送
+        smtpObj.sendmail(
+            sender, receivers, message.as_string())
+        # 退出
+        smtpObj.quit()
+    except smtplib.SMTPException as e:
+        print('error', e)  # 打印错误
+
+```
+
+
+
+## 使用selenium
+
+> 此方法使用代码控制浏览器进行打卡，属于模拟操作，比较简单可控
+
+###  :fire: win10系统
+
+#### 依赖
 
 1. 谷歌浏览器
 
@@ -34,7 +254,7 @@
 
 
 
-### python脚本
+#### python脚本
 
 > 需要将stealth.min.js 和python脚本放在同一目录
 >
@@ -139,25 +359,24 @@ if driver.find_element(By.XPATH, "/html/body/div/div/div[2]/div[1]/button/span[2
         print("打卡失败")
 else:
     print("已过打卡")
-    
+
 sleep(2)
 driver.quit()
 ```
 
-### 定时任务
+#### 定时任务
 
 win系统由于不是24小时运行，所以定时任务有很多局限性，如有需要可[点击](https://blog.csdn.net/junzixing1985/article/details/125613022)自行设置
 
-
-## 服务器部署
+###  :fire: 服务器部署
 
 > 使用阿里云服务器IP地址要在长沙，否则会出现异地定位
 >
 > 可以使用阿里云自动打卡之后，可以当天自己手动修改定位，以避免班委早晨催促
 
-### amd64架构
+#### amd64架构
 
-#### CentOS 安装chrome
+##### CentOS 安装chrome
 
 ```shell
 wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
@@ -173,7 +392,7 @@ yum install -y google-chrome-stable_current_x86_64.rpm  # 默认安装在/opt/go
 
 
 
-#### Ubuntu安装chrome
+##### Ubuntu安装chrome
 
 ```shell
 apt update
@@ -186,7 +405,7 @@ google-chrome --version  # 查看当前chrome版本
 
 
 
-#### python依赖项
+##### python依赖项
 
 ```shell
 pip install selenium 
@@ -204,7 +423,7 @@ stealth.min.js
 
 提取码: 3php 
 
-#### python自动打卡脚本
+##### python自动打卡脚本
 
 自行修改代码中
 
@@ -317,7 +536,7 @@ else:
 driver.quit()
 ```
 
-#### shell脚本
+##### shell脚本
 
 自行更改路径
 
@@ -326,7 +545,7 @@ driver.quit()
 python3 /db/yiban/yiban.py
 ```
 
-#### 定时任务
+##### 定时任务
 
 请自行搜索
 
@@ -334,9 +553,9 @@ python3 /db/yiban/yiban.py
 
 ![1662265765805](./1662265765805.png)
 
-### arm64架构（树莓派)
+#### arm64架构（树莓派)
 
-#### 安装Chromium
+##### 安装Chromium
 
 > Chromium是谷歌Chrome的开源版本，不同与Chrome，Chromium的很多代码由开源社区提供。
 >
@@ -361,7 +580,7 @@ python3 /db/yiban/yiban.py
 
  ![下载这些内容](./8984722c132e48c29348d422bf934ca3.png) 
 
-##### 下载
+###### 下载
 
 复制下载地址(请自行复制高版本下载链接替换下方)，我们到树莓派上，使用`wget`下载 ：
 
@@ -376,7 +595,7 @@ wget 'http://ports.ubuntu.com/pool/universe/c/chromium-browser/chromium-chromedr
 
 ![下载到树莓派上](./fd9cd3c1816a47fbaebcb812a8b004ec.png) 
 
-##### 包管理器安装
+###### 包管理器安装
 
 现在，我们使用Debain的包管理器（dpkg 即package manager for Debian）进行安装，安装顺序是：
 chromium-codecs-ffmpeg-extra–>chromium-browser->chromium-chromedriver。
@@ -418,7 +637,7 @@ chromium-browser -version
 
 > 如无法查看版本，请按报错信息下载依赖
 
-#### python依赖项
+##### python依赖项
 
 ```shell
 pip install selenium 
@@ -432,7 +651,7 @@ stealth.min.js
 
 提取码: 3php 
 
-#### python自动打卡脚本
+##### python自动打卡脚本
 
 自行修改代码中
 
@@ -544,7 +763,7 @@ else:
 driver.quit()
 ```
 
-#### shell脚本
+##### shell脚本
 
 自行更改路径
 
@@ -553,7 +772,7 @@ driver.quit()
 python3 /db/yiban/yiban.py
 ```
 
-#### 定时任务
+##### 定时任务
 
 请自行搜索
 
