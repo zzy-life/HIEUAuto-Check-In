@@ -23,7 +23,7 @@ mail_host = 'smtp.163.com'
 # 163用户名
 mail_user = 'My1998zzy@163.com'
 # 密码(部分邮箱为授权码)
-mail_pass = 'QRXEBJDOPZVTHBZF'
+mail_pass = '请填写授权码'
 # 邮件发送方邮箱地址
 sender = 'My1998zzy@163.com'
 
